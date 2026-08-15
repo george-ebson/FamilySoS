@@ -1,0 +1,14 @@
+# Tells Netlify: publish the whole repo root as the static site, and look
+# for serverless Functions specifically in netlify/functions/.
+# No [build.command] is needed — there's no build step for the site itself
+# (plain HTML/CSS/JS, no bundler), but Netlify will still run `npm install`
+# automatically because it detects package.json, which is required so the
+# send-alert function has firebase-admin available to it.
+
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["firebase-admin"]
