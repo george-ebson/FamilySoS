@@ -540,7 +540,7 @@ document.getElementById('btn-resolve-safe').addEventListener('click', async () =
 document.getElementById('btn-alert-done').addEventListener('click', () => {
   currentAlertId = null;
   showScreen('screen-home');
-});
+updateNotifBanner();});
 
 // ---------- Emergency Contacts screen wiring ----------
 let unsubscribeContactsWatcher = null;
