@@ -1,0 +1,8 @@
+{
+  "name": "familysos",
+  "private": true,
+  "description": "Server-side dependency for netlify/functions/send-alert.js only — the static site itself uses no build step or dependencies.",
+  "dependencies": {
+    "firebase-admin": "^12.6.0"
+  }
+}
