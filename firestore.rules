@@ -1,0 +1,115 @@
+rules_version = '2';
+
+// FamilySOS — Firestore Security Rules
+//
+// This is where "invite-only, no public profiles, no discoverability" is
+// actually enforced. The app's JavaScript is just a convenience layer —
+// anyone could bypass it with browser dev tools. These rules run on
+// Firebase's servers and are the real gatekeeper: no rule match = denied.
+//
+// Data model (Phase 1):
+//   /users/{uid}                         — one profile per person
+//   /families/{familyId}                 — one doc per family
+//   /families/{familyId}/alerts/{id}      — SOS alerts, scoped to that family
+//   /families/{familyId}/contacts/{id}    — emergency contacts, scoped to family
+//   /inviteCodes/{code}                   — narrow lookup: code -> familyId/name only
+//
+// Phase 2+ note: things like medical info should live in a NEW subcollection
+// (e.g. /users/{uid}/medical/{doc}) with its own stricter rules block —
+// never added as extra fields on the existing /users/{uid} document.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Looks up the caller's own profile to find which family they belong to.
+    function callerFamilyId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId;
+    }
+
+    function isMemberOfFamily(familyId) {
+      return isSignedIn() && callerFamilyId() == familyId;
+    }
+
+    // ---------------- USERS ----------------
+    match /users/{userId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId ||
+        resource.data.familyId == callerFamilyId()
+      );
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    // ---------------- FAMILIES ----------------
+    match /families/{familyId} {
+      // get = fetch by known ID (fine, that's all the app ever does).
+      // list = browsing/querying the whole collection — never needed, so blocked.
+      allow get: if isMemberOfFamily(familyId);
+      allow list: if false;
+
+      // Creating a brand-new family: caller must be listed as its only
+      // member and its creator — stops someone pre-loading other people
+      // into a family they haven't actually invited yet.
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.memberIds == [request.auth.uid];
+
+      // Two ways an update is allowed:
+      //  (a) an existing member changing family info (e.g. renaming it), or
+      //  (b) someone NOT yet a member joining by adding ONLY their own uid
+      //      to memberIds, with every other field left untouched.
+      allow update: if isMemberOfFamily(familyId)
+        || (
+          isSignedIn()
+          && !(request.auth.uid in resource.data.memberIds)
+          && request.resource.data.memberIds == resource.data.memberIds.concat([request.auth.uid])
+          && request.resource.data.name == resource.data.name
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.inviteCode == resource.data.inviteCode
+        );
+
+      allow delete: if false;
+
+      // ---------------- ALERTS (subcollection) ----------------
+      match /alerts/{alertId} {
+        allow read: if isMemberOfFamily(familyId);
+        allow create: if isMemberOfFamily(familyId)
+          && request.resource.data.triggeredBy == request.auth.uid;
+        allow update: if isMemberOfFamily(familyId);
+        allow delete: if false;
+      }
+
+      // ---------------- EMERGENCY CONTACTS (subcollection) ----------------
+      match /contacts/{contactId} {
+        allow read: if isMemberOfFamily(familyId);
+        allow create, update, delete: if isMemberOfFamily(familyId);
+      }
+    }
+
+    // ---------------- INVITE CODES ----------------
+    // Deliberately minimal: a code maps to a familyId + familyName ONLY.
+    // No member list, no alerts, nothing else is reachable from here.
+    //
+    // Note: creating this doc is only gated by "you're signed in," not by
+    // re-checking which family it points to. That's intentional — this
+    // collection is just a convenience lookup table, not a security
+    // boundary. The actual gate on who can join a family lives in the
+    // families/{familyId} update rule above (self-add to memberIds only).
+    // (A stricter version of this rule that reads the family doc inside
+    // the same batch write doesn't work: Firestore evaluates every rule in
+    // a batch against the pre-batch database state, so a get() here can't
+    // see the family doc being created alongside it in the same batch.)
+    match /inviteCodes/{code} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

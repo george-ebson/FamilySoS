@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>FamilySOS</title>
+  <meta name="description" content="Private, invite-only emergency coordination for your family." />
+
+  <!-- PWA install support -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0F1B2D" />
+  <link rel="icon" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="stylesheet" href="/css/styles.css" />
+
+  <!-- Leaflet: renders the map on the Active Alert screen. Free, no API key. -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+</head>
+<body>
+
+  <!-- Shown briefly while we check whether the person is already logged in -->
+  <div id="screen-loading" class="screen loading-screen active">Loading FamilySOS…</div>
+
+  <!-- ===================== AUTH / ONBOARDING SCREEN ===================== -->
+  <main id="screen-auth" class="screen">
+    <div class="screen-header">
+      <svg class="logo-mark" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="28" cy="28" r="25" stroke="#3D6EA8" stroke-width="2.5"/>
+        <circle cx="28" cy="28" r="17" stroke="#3D6EA8" stroke-width="2.5"/>
+        <circle cx="28" cy="28" r="6" fill="#E8483C"/>
+      </svg>
+      <div class="eyebrow">Private &amp; invite-only</div>
+      <h1 id="auth-title">Welcome to FamilySOS</h1>
+      <p id="auth-subtitle">Sign in to reach your family, fast.</p>
+    </div>
+
+    <div id="auth-error" class="form-error" role="alert"></div>
+
+    <form id="auth-form">
+      <!-- Only shown in "sign up" mode -->
+      <div class="field" id="field-name" style="display:none;">
+        <label for="input-name">Your name</label>
+        <input id="input-name" type="text" autocomplete="name" placeholder="e.g. Amaka" />
+      </div>
+
+      <div class="field">
+        <label for="input-email">Email</label>
+        <input id="input-email" type="email" autocomplete="email" placeholder="you@example.com" required />
+      </div>
+
+      <div class="field">
+        <label for="input-password">Password</label>
+        <input id="input-password" type="password" autocomplete="current-password" placeholder="At least 6 characters" required />
+        <div class="field-hint" id="password-hint" style="display:none;">Use at least 6 characters.</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="auth-submit">Log in</button>
+    </form>
+
+    <div class="auth-toggle">
+      <span id="auth-toggle-text" style="color:var(--color-text-muted); font-size:14px;">Don't have an account?</span>
+      <button type="button" class="btn-text" id="auth-toggle-btn">Sign up</button>
+    </div>
+  </main>
+
+  <!-- ===================== CREATE / JOIN FAMILY SCREEN ===================== -->
+  <main id="screen-family" class="screen">
+
+    <!-- Mode: choice between create / join -->
+    <div id="family-mode-choice" class="family-mode">
+      <div class="screen-header">
+        <div class="eyebrow">One more step</div>
+        <h1>Set up your family</h1>
+        <p>Create a brand-new private family, or join one with an invite code someone shared with you.</p>
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-show-create">Create a Family</button>
+      <button type="button" class="btn btn-secondary" id="btn-show-join">Join a Family</button>
+    </div>
+
+    <!-- Mode: create a family -->
+    <div id="family-mode-create" class="family-mode" style="display:none;">
+      <div class="screen-header">
+        <button type="button" class="btn-back" id="create-back">&larr; Back</button>
+        <h1>Create your family</h1>
+        <p>Give it a name your family will recognize — this is just a label, never shown outside your family.</p>
+      </div>
+      <div id="create-error" class="form-error" role="alert"></div>
+      <form id="create-form">
+        <div class="field">
+          <label for="input-family-name">Family name</label>
+          <input id="input-family-name" type="text" placeholder="e.g. The Adeyemi Family" required maxlength="60" />
+        </div>
+        <button type="submit" class="btn btn-primary" id="create-submit">Create family</button>
+      </form>
+    </div>
+
+    <!-- Mode: family created — show the invite code -->
+    <div id="family-mode-created" class="family-mode" style="display:none;">
+      <div class="screen-header">
+        <div class="eyebrow">Family created</div>
+        <h1>Share this code</h1>
+        <p>Send this code to each family member so they can join. Keep it private — anyone with this code can join your family.</p>
+      </div>
+      <div class="invite-code-display" id="invite-code-text">------</div>
+      <button type="button" class="btn btn-secondary" id="btn-copy-code">Copy code</button>
+      <button type="button" class="btn btn-primary" id="btn-created-continue">Continue</button>
+    </div>
+
+    <!-- Mode: join a family -->
+    <div id="family-mode-join" class="family-mode" style="display:none;">
+      <div class="screen-header">
+        <button type="button" class="btn-back" id="join-back">&larr; Back</button>
+        <h1>Join a family</h1>
+        <p>Enter the invite code a family member shared with you.</p>
+      </div>
+      <div id="join-error" class="form-error" role="alert"></div>
+      <form id="join-form">
+        <div class="field">
+          <label for="input-invite-code">Invite code</label>
+          <input id="input-invite-code" type="text" placeholder="e.g. 7K9QXR" maxlength="6" autocapitalize="characters" required />
+        </div>
+        <button type="submit" class="btn btn-primary" id="join-submit">Find family</button>
+      </form>
+    </div>
+
+    <!-- Mode: confirm join -->
+    <div id="family-mode-confirm" class="family-mode" style="display:none;">
+      <div class="screen-header">
+        <div class="eyebrow">Found it</div>
+        <h1 id="confirm-family-name">Family Name</h1>
+        <p>Join this family? You'll be able to send and receive emergency alerts with them.</p>
+      </div>
+      <div id="confirm-error" class="form-error" role="alert"></div>
+      <button type="button" class="btn btn-primary" id="btn-confirm-join">Yes, join this family</button>
+      <button type="button" class="btn btn-secondary" id="btn-confirm-cancel">Try a different code</button>
+    </div>
+
+  </main>
+
+  <!-- ===================== HOME / SOS SCREEN ===================== -->
+  <main id="screen-home" class="screen">
+    <div class="home-top">
+      <div class="eyebrow" id="home-family-name">Your Family</div>
+      <div class="home-top-actions">
+        <button type="button" class="btn-text" id="home-contacts">Contacts</button>
+        <button type="button" class="btn-text btn-text-muted" id="home-logout">Log out</button>
+      </div>
+    </div>
+
+    <div class="sos-area">
+      <div class="sos-wrap">
+        <svg class="sos-ring" viewBox="0 0 240 240">
+          <circle class="sos-ring-bg" cx="120" cy="120" r="108" />
+          <circle class="sos-ring-progress" id="sos-ring-progress" cx="120" cy="120" r="108" />
+        </svg>
+        <button type="button" class="sos-button" id="btn-sos" aria-label="Press and hold to send an emergency alert">
+          <span class="sos-button-label">HOLD<br />FOR SOS</span>
+        </button>
+      </div>
+      <p class="sos-hint" id="sos-hint">Press and hold for 2 seconds to alert your family</p>
+      <div id="sos-error" class="form-error" role="alert"></div>
+    </div>
+  </main>
+
+  <!-- ===================== ACTIVE ALERT SCREEN ===================== -->
+  <main id="screen-alert" class="screen screen-alert">
+    <div class="alert-banner" id="alert-banner">
+      <span class="alert-banner-dot"></span>
+      <div>
+        <div class="alert-banner-title" id="alert-title">Someone needs help</div>
+        <div class="alert-banner-time" id="alert-time">--</div>
+      </div>
+    </div>
+
+    <div id="alert-map" class="alert-map"></div>
+
+    <div class="alert-members" id="alert-members-list">
+      <!-- rendered dynamically by app.js -->
+    </div>
+
+    <div id="alert-resolved-banner" class="alert-resolved-banner" style="display:none;">
+      <strong>Resolved.</strong> <span id="alert-resolved-text"></span>
+    </div>
+
+    <div class="alert-actions" id="alert-actions">
+      <button type="button" class="btn btn-secondary" id="btn-ack-seen">Seen</button>
+      <button type="button" class="btn btn-secondary" id="btn-ack-omw">On my way</button>
+      <button type="button" class="btn btn-safe" id="btn-resolve-safe">I'm Safe</button>
+    </div>
+
+    <button type="button" class="btn btn-primary" id="btn-alert-done" style="display:none;">Done</button>
+  </main>
+
+  <!-- ===================== EMERGENCY CONTACTS SCREEN ===================== -->
+  <main id="screen-contacts" class="screen">
+
+    <!-- Mode: list view -->
+    <div id="contacts-mode-list" class="contacts-mode">
+      <div class="home-top">
+        <div class="eyebrow">Emergency Contacts</div>
+        <button type="button" class="btn-text btn-text-muted" id="contacts-back">Done</button>
+      </div>
+      <div id="contacts-list" class="contacts-list">
+        <!-- rendered dynamically by app.js -->
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-add-contact">+ Add a contact</button>
+    </div>
+
+    <!-- Mode: add/edit form -->
+    <div id="contacts-mode-form" class="contacts-mode" style="display:none;">
+      <div class="screen-header">
+        <button type="button" class="btn-back" id="contact-form-back">&larr; Back</button>
+        <h1 id="contact-form-title">Add a contact</h1>
+      </div>
+      <div id="contact-form-error" class="form-error" role="alert"></div>
+      <form id="contact-form">
+        <div class="field">
+          <label for="input-contact-name">Name</label>
+          <input id="input-contact-name" type="text" required maxlength="60" />
+        </div>
+        <div class="field">
+          <label for="input-contact-relationship">Relationship</label>
+          <input id="input-contact-relationship" type="text" placeholder="e.g. Mother, Family doctor, Neighbor" required maxlength="60" />
+        </div>
+        <div class="field">
+          <label for="input-contact-phone">Phone number</label>
+          <input id="input-contact-phone" type="tel" placeholder="e.g. +234 801 234 5678" required maxlength="30" />
+        </div>
+        <button type="submit" class="btn btn-primary" id="contact-form-submit">Save contact</button>
+      </form>
+      <button type="button" class="btn btn-danger-outline" id="btn-delete-contact" style="display:none;">Delete contact</button>
+    </div>
+
+    <!-- Mode: delete confirmation -->
+    <div id="contacts-mode-confirm-delete" class="contacts-mode" style="display:none;">
+      <div class="screen-header">
+        <div class="eyebrow" style="color: var(--color-danger);">Confirm</div>
+        <h1>Delete this contact?</h1>
+        <p id="delete-contact-name">This can't be undone.</p>
+      </div>
+      <button type="button" class="btn btn-danger-outline" id="btn-confirm-delete">Yes, delete</button>
+      <button type="button" class="btn btn-secondary" id="btn-cancel-delete">Cancel</button>
+    </div>
+
+  </main>
+
+  <!-- Leaflet JS must load before app.js, which uses the global L object -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,583 @@
+/* ============================================
+   FamilySOS — Design tokens
+   Calm by default, urgent only where it matters.
+   ============================================ */
+
+:root {
+  /* Color: dark, low-glare baseline. Red is reserved ONLY for SOS/alert
+     states so it never loses its meaning through overuse. */
+  --color-bg: #0F1B2D;
+  --color-surface: #16273F;
+  --color-surface-raised: #1D3350;
+  --color-text: #F5F7FA;
+  --color-text-muted: #9FB0C8;
+  --color-border: #2A3F5C;
+
+  --color-danger: #E8483C;      /* SOS + active alerts, nothing else */
+  --color-danger-press: #C93A2F;
+  --color-action: #3D6EA8;      /* secondary actions: join, add, etc */
+  --color-action-press: #325C8C;
+  --color-safe: #2E8B75;        /* resolved / "I'm Safe" */
+
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-full: 999px;
+
+  --space-1: 8px;
+  --space-2: 12px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+
+  /* System font stack — instant load, no external network call, works offline.
+     A privacy + reliability choice, not a shortcut. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --tap-target-min: 56px; /* minimum comfortable tap target under stress */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+  margin: 0 0 var(--space-2) 0;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0 0 var(--space-3) 0;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Visible keyboard focus everywhere — important for accessibility and for
+   anyone navigating one-handed with assistive tech under stress. */
+:focus-visible {
+  outline: 3px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ============================================
+   Screen container
+   ============================================ */
+
+.screen {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-4);
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.screen.active {
+  display: flex;
+}
+
+.screen-header {
+  margin-bottom: var(--space-5);
+}
+
+.screen-header .eyebrow {
+  color: var(--color-danger);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+
+/* ============================================
+   Forms
+   ============================================ */
+
+.field {
+  margin-bottom: var(--space-3);
+}
+
+.field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+  color: var(--color-text);
+}
+
+.field input {
+  width: 100%;
+  min-height: var(--tap-target-min);
+  padding: 0 var(--space-3);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: 16px; /* 16px minimum prevents iOS auto-zoom on focus */
+}
+
+.field input:focus {
+  border-color: var(--color-action);
+}
+
+.field-hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--tap-target-min);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.08s ease, background-color 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--color-action);
+  color: var(--color-text);
+}
+.btn-primary:hover { background: var(--color-action-press); }
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-text {
+  background: transparent;
+  color: var(--color-action);
+  font-weight: 600;
+}
+
+/* ============================================
+   Auth screen specifics
+   ============================================ */
+
+.auth-toggle {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  justify-content: center;
+}
+
+.form-error {
+  display: none;
+  background: rgba(232, 72, 60, 0.12);
+  border: 1px solid var(--color-danger);
+  color: #FFD5D1;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  margin-bottom: var(--space-3);
+}
+
+.form-error.visible {
+  display: block;
+}
+
+.logo-mark {
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--space-3);
+}
+
+/* Simple centered loading state shown while we check auth status on load */
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--color-text-muted);
+  font-size: 15px;
+}
+
+/* ============================================
+   Create / Join Family screen
+   ============================================ */
+
+.btn-secondary {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  border: 1.5px solid var(--color-border);
+  margin-top: var(--space-2);
+}
+.btn-secondary:hover { background: var(--color-surface); }
+
+.family-mode .btn + .btn {
+  margin-top: var(--space-2);
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: var(--space-3);
+  cursor: pointer;
+}
+.btn-back:hover { color: var(--color-text); }
+
+.invite-code-display {
+  font-family: ui-monospace, "SF Mono", "Roboto Mono", Menlo, monospace;
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  color: var(--color-action);
+}
+
+#input-invite-code {
+  font-family: ui-monospace, "SF Mono", "Roboto Mono", Menlo, monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ============================================
+   Home / SOS screen
+   ============================================ */
+
+#screen-home {
+  justify-content: space-between;
+}
+
+.home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-2);
+}
+
+.btn-text-muted {
+  color: var(--color-text-muted);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.sos-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.sos-wrap {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  touch-action: none; /* prevents scroll/zoom gestures from interrupting a hold */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sos-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg); /* so the fill starts at 12 o'clock */
+}
+
+.sos-ring-bg {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 4;
+}
+
+.sos-ring-progress {
+  fill: none;
+  stroke: var(--color-safe);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 678.6; /* 2 * PI * 108, the circle's circumference */
+  stroke-dashoffset: 678.6; /* fully hidden at rest */
+  transition: none;
+}
+.sos-ring-progress.filling {
+  transition: stroke-dashoffset 2s linear;
+  stroke-dashoffset: 0;
+}
+
+.sos-button {
+  position: absolute;
+  inset: 20px; /* sits just inside the progress ring */
+  border-radius: 50%;
+  border: none;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  cursor: pointer;
+  box-shadow: 0 0 0 0 rgba(255, 90, 54, 0.55);
+  animation: sos-breathe 2.8s ease-in-out infinite;
+}
+
+.sos-button:active,
+.sos-button.holding {
+  animation: none;
+  transform: scale(0.97);
+}
+
+@keyframes sos-breathe {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 90, 54, 0.45); }
+  70%  { box-shadow: 0 0 0 22px rgba(255, 90, 54, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 90, 54, 0); }
+}
+
+.sos-hint {
+  color: var(--color-text-muted);
+  font-size: 15px;
+  text-align: center;
+}
+
+/* ============================================
+   Active Alert screen
+   ============================================ */
+
+.screen-alert {
+  gap: var(--space-3);
+}
+
+.alert-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: rgba(232, 72, 60, 0.12);
+  border: 1.5px solid var(--color-danger);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.alert-banner-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  flex-shrink: 0;
+  animation: sos-breathe 2.8s ease-in-out infinite;
+}
+
+.alert-banner-title {
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.alert-banner-time {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.alert-map {
+  width: 100%;
+  height: 220px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface); /* shows while tiles load */
+}
+
+.alert-members {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.alert-member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.alert-member-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.alert-member-status {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.status-pending {
+  color: var(--color-text-muted);
+  background: var(--color-surface-raised);
+}
+.status-seen {
+  color: var(--color-action);
+  background: rgba(61, 110, 168, 0.14);
+}
+.status-on_the_way {
+  color: var(--color-action);
+  background: rgba(61, 110, 168, 0.14);
+}
+.status-safe {
+  color: var(--color-safe);
+  background: rgba(46, 139, 117, 0.14);
+}
+
+.alert-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.alert-actions .btn {
+  flex: 1;
+  margin-top: 0;
+}
+
+.btn-safe {
+  background: var(--color-safe);
+  color: #fff;
+  border: none;
+}
+.btn-safe:hover { opacity: 0.9; }
+
+.alert-resolved-banner {
+  background: rgba(46, 139, 117, 0.14);
+  border: 1.5px solid var(--color-safe);
+  color: var(--color-safe);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  font-size: 15px;
+}
+
+/* ============================================
+   Emergency Contacts screen
+   ============================================ */
+
+.home-top-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.contacts-mode {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--space-3);
+}
+
+.contacts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.contacts-empty {
+  color: var(--color-text-muted);
+  font-size: 15px;
+  text-align: center;
+  padding: var(--space-5) var(--space-3);
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  cursor: pointer;
+}
+
+.contact-row-info { min-width: 0; }
+
+.contact-row-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.contact-row-relationship {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.contact-row-call {
+  flex-shrink: 0;
+  background: var(--color-safe);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: var(--color-danger);
+  border: 1.5px solid var(--color-danger);
+  margin-top: var(--space-2);
+}
+.btn-danger-outline:hover {
+  background: rgba(232, 72, 60, 0.1);
+}
