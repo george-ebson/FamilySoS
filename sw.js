@@ -3,7 +3,7 @@
 // and still loads even with a poor connection. It does NOT cache live data
 // like alerts or family info — that always comes fresh from Firestore.
 
-const CACHE_NAME = 'familysos-shell-v6';
+const CACHE_NAME = 'familysos-shell-v8';
 
 const SHELL_FILES = [
   '/',
@@ -15,6 +15,7 @@ const SHELL_FILES = [
   '/js/sos.js',
   '/js/alerts.js',
   '/js/contacts.js',
+  '/js/push.js',
   '/js/firebase-config.js',
   '/manifest.json',
   '/icons/icon-192.png',
