@@ -3,6 +3,7 @@ import { createFamily, lookupInviteCode, joinFamily } from './family.js';
 import { triggerSOS } from './sos.js';
 import { watchLatestAlert, fetchFamilyMembers, acknowledgeAlert, resolveAlert } from './alerts.js';
 import { watchContacts, addContact, updateContact, deleteContact } from './contacts.js';
+import { notificationPermissionState, enableNotifications } from './push.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { db } from './firebase-config.js';
 
@@ -46,6 +47,21 @@ async function goToHome(familyId, familyName) {
 
   startAlertWatcher(familyId);
   startContactsWatcher(familyId);
+  updateNotifBanner();
+}
+
+function updateNotifBanner() {
+  const banner = document.getElementById('notif-banner');
+  const state = notificationPermissionState();
+  // Only show the prompt if the browser supports it AND the person hasn't
+  // already answered (either way) — no point nagging someone who already
+  // said yes, and no point re-asking someone who said no (browsers won't
+  // re-prompt anyway; they'd need to change it in their own settings).
+  banner.style.display = state === 'default' ? 'flex' : 'none';
+
+  // TEMPORARY DEBUG — remove once the notification banner issue is solved
+  const debugEl = document.getElementById('debug-notif-state');
+  if (debugEl) debugEl.textContent = `[debug] permission state: ${state}`;
 }
 
 // ---------- Auth screen wiring ----------
@@ -129,6 +145,25 @@ form.addEventListener('submit', async (event) => {
 
 document.getElementById('home-logout').addEventListener('click', async () => {
   await logOut();
+});
+
+document.getElementById('btn-enable-notifs').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-enable-notifs');
+  btn.disabled = true;
+  btn.textContent = 'Enabling…';
+  try {
+    await enableNotifications(session.uid);
+    updateNotifBanner(); // hides it now that permission is 'granted'
+  } catch (err) {
+    console.error('Could not enable notifications:', err);
+    // Whether denied or unsupported, hide the banner rather than leave a
+    // button that will just fail again — browsers won't re-prompt anyway
+    // once a person has answered, so nagging further wouldn't help.
+    document.getElementById('notif-banner').style.display = 'none';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Enable';
+  }
 });
 
 // ---------- Create / Join Family screen wiring ----------
@@ -540,7 +575,8 @@ document.getElementById('btn-resolve-safe').addEventListener('click', async () =
 document.getElementById('btn-alert-done').addEventListener('click', () => {
   currentAlertId = null;
   showScreen('screen-home');
-updateNotifBanner();});
+  updateNotifBanner();
+});
 
 // ---------- Emergency Contacts screen wiring ----------
 let unsubscribeContactsWatcher = null;
