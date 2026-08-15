@@ -9,7 +9,7 @@ import {
   setDoc,
   serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { db } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';
 
 function getCurrentPositionOnce() {
   return new Promise((resolve, reject) => {
@@ -19,8 +19,8 @@ function getCurrentPositionOnce() {
     }
     navigator.geolocation.getCurrentPosition(resolve, reject, {
       enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0 // never reuse a cached/stale position for an SOS
+      timeout: 20000, // laptops using WiFi-based positioning can be slower than GPS-equipped phones
+      maximumAge: 5000 // allow reusing a fix from the last 5s — still tied to this specific trigger, not background tracking
     });
   });
 }
@@ -60,6 +60,26 @@ export async function triggerSOS({ familyId, uid, displayName }) {
     // "Seen" around the same time).
     acknowledgments: {}
   });
+
+  // Ask the server-side function to push a notification to everyone else
+  // in the family. This is deliberately best-effort: the Firestore write
+  // above is what actually matters (it's what the live in-app Active Alert
+  // screen reacts to for anyone who has the app open) — a failure here
+  // just means someone who doesn't have the app open right now might not
+  // get pinged, which we log but don't let break the SOS trigger itself.
+  try {
+    const idToken = await auth.currentUser.getIdToken();
+    await fetch('/.netlify/functions/send-alert', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`
+      },
+      body: JSON.stringify({ familyId, alertId: alertRef.id })
+    });
+  } catch (err) {
+    console.error('Could not send push notification (alert was still created successfully):', err);
+  }
 
   return alertRef.id;
 }
